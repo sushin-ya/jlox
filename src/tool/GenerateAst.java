@@ -7,7 +7,7 @@ import java.util.List;
 
 public class GenerateAst {
   public static void main(String[] args) throws IOException {
-    if (args.length == 1) {
+    if (args.length != 1) {
       System.err.println("Usage: generate_ast <output directory>");
       System.exit(64);
     }
@@ -24,7 +24,7 @@ public class GenerateAst {
     String path = outputDir + "/" + baseName + ".java";
     PrintWriter writer = new PrintWriter(path, "UTF-8");
 
-    writer.println("package com.craftinginterpreters.lox;");
+    writer.println("package src.lox;");
     writer.println();
     writer.println("import java.util.List;");
     writer.println();
@@ -37,7 +37,7 @@ public class GenerateAst {
     }
 
     writer.println("}");
-    writer.println("}");
+    writer.close();
   }
 
   private static void defineType(
