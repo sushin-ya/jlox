@@ -25,10 +25,10 @@ class Interpreter implements Expr.Visitor<Object> {
       case MINUS:
         checkNumberOperand(expr.operator, right);
         return -(double) right;
+      default:
+        // unreachable
+        return null;
     }
-
-    // unreachable
-    return null;
   }
 
   private void checkNumberOperand(Token operator, Object operand) {
@@ -126,9 +126,10 @@ class Interpreter implements Expr.Visitor<Object> {
       case STAR:
         checkNumberOperands(expr.operator, left, right);
         return (double) left * (double) right;
+      default:
+        // unreachable.
+        return null;
     }
 
-    // unreachable.
-    return null;
   }
 }
