@@ -1,11 +1,12 @@
-package src.lox;
+package com.craftinginterpreters.lox;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
+class Interpreter implements Expr.Visitor<Object>,
+    Stmt.Visitor<Void> {
   final Environment globals = new Environment();
   private Environment environment = globals;
   private final Map<Expr, Integer> locals = new HashMap<>();
@@ -18,14 +19,15 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
       }
 
       @Override
-      public Object call(Interpreter interpreter, List<Object> arguments) {
-        return (double) System.currentTimeMillis() / 100.0;
+      public Object call(Interpreter interpreter,
+          List<Object> arguments) {
+        return (double) System.currentTimeMillis() / 1000.0;
       }
 
       @Override
       public String toString() {
         return "<native fn>";
-      };
+      }
     });
   }
 
@@ -51,7 +53,8 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     locals.put(expr, depth);
   }
 
-  void executeBlock(List<Stmt> statements, Environment environment) {
+  void executeBlock(List<Stmt> statements,
+      Environment environment) {
     Environment previous = this.environment;
     try {
       this.environment = environment;
@@ -76,7 +79,8 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     if (stmt.superclass != null) {
       superclass = evaluate(stmt.superclass);
       if (!(superclass instanceof LoxClass)) {
-        throw new RuntimeError(stmt.superclass.name, "Superclass must be a class");
+        throw new RuntimeError(stmt.superclass.name,
+            "Superclass must be a class.");
       }
     }
 
@@ -89,16 +93,17 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     Map<String, LoxFunction> methods = new HashMap<>();
     for (Stmt.Function method : stmt.methods) {
-      LoxFunction function = new LoxFunction(method, environment, method.name.lexeme.equals("init"));
+      LoxFunction function = new LoxFunction(method, environment,
+          method.name.lexeme.equals("init"));
       methods.put(method.name.lexeme, function);
     }
 
-    LoxClass klass = new LoxClass(stmt.name.lexeme, (LoxClass) superclass, methods);
+    LoxClass klass = new LoxClass(stmt.name.lexeme,
+        (LoxClass) superclass, methods);
 
     if (superclass != null) {
       environment = environment.enclosing;
     }
-
     environment.assign(stmt.name, klass);
     return null;
   }
@@ -111,7 +116,8 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
   @Override
   public Void visitFunctionStmt(Stmt.Function stmt) {
-    LoxFunction function = new LoxFunction(stmt, environment, false);
+    LoxFunction function = new LoxFunction(stmt, environment,
+        false);
     environment.define(stmt.name.lexeme, function);
     return null;
   }
@@ -119,7 +125,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   @Override
   public Void visitIfStmt(Stmt.If stmt) {
     if (isTruthy(evaluate(stmt.condition))) {
-      execute(stmt.theBranch);
+      execute(stmt.thenBranch);
     } else if (stmt.elseBranch != null) {
       execute(stmt.elseBranch);
     }
@@ -128,7 +134,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
   @Override
   public Void visitPrintStmt(Stmt.Print stmt) {
-    Object value = evaluate(stmt.expressions);
+    Object value = evaluate(stmt.expression);
     System.out.println(stringify(value));
     return null;
   }
@@ -158,7 +164,6 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     while (isTruthy(evaluate(stmt.condition))) {
       execute(stmt.body);
     }
-
     return null;
   }
 
@@ -179,7 +184,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   @Override
   public Object visitBinaryExpr(Expr.Binary expr) {
     Object left = evaluate(expr.left);
-    Object right = evaluate(expr.right);
+    Object right = evaluate(expr.right); // [left]
 
     switch (expr.operator.type) {
       case BANG_EQUAL:
@@ -204,24 +209,24 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
       case PLUS:
         if (left instanceof Double && right instanceof Double) {
           return (double) left + (double) right;
-        }
+        } // [plus]
 
         if (left instanceof String && right instanceof String) {
           return (String) left + (String) right;
         }
 
-        throw new RuntimeError(expr.operator, "Operands must be two numbers or two strings.");
+        throw new RuntimeError(expr.operator,
+            "Operands must be two numbers or two strings.");
       case SLASH:
         checkNumberOperands(expr.operator, left, right);
         return (double) left / (double) right;
       case STAR:
         checkNumberOperands(expr.operator, left, right);
         return (double) left * (double) right;
-      default:
-        // unreachable.
-        return null;
     }
 
+    // Unreachable.
+    return null;
   }
 
   @Override
@@ -229,22 +234,31 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     Object callee = evaluate(expr.callee);
 
     List<Object> arguments = new ArrayList<>();
-    for (Expr argument : expr.arguments) {
+    for (Expr argument : expr.arguments) { // [in-order]
       arguments.add(evaluate(argument));
     }
 
+    // > check-is-callable
     if (!(callee instanceof LoxCallable)) {
-      throw new RuntimeError(expr.paren, "Can only call functions and classes.");
+      throw new RuntimeError(expr.paren,
+          "Can only call functions and classes.");
     }
 
+    // < check-is-callable
     LoxCallable function = (LoxCallable) callee;
+    // > check-arity
     if (arguments.size() != function.arity()) {
-      throw new RuntimeError(expr.paren,
-          "Expected " + function.arity() + " arguments but got " + arguments.size() + ".");
+      throw new RuntimeError(expr.paren, "Expected " +
+          function.arity() + " arguments but got " +
+          arguments.size() + ".");
     }
+
+    // < check-arity
     return function.call(this, arguments);
   }
 
+  // < Functions visit-call
+  // > Classes interpreter-visit-get
   @Override
   public Object visitGetExpr(Expr.Get expr) {
     Object object = evaluate(expr.object);
@@ -256,16 +270,22 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         "Only instances have properties.");
   }
 
+  // < Classes interpreter-visit-get
+  // > visit-grouping
   @Override
   public Object visitGroupingExpr(Expr.Grouping expr) {
     return evaluate(expr.expression);
   }
 
+  // < visit-grouping
+  // > visit-literal
   @Override
   public Object visitLiteralExpr(Expr.Literal expr) {
     return expr.value;
   }
 
+  // < visit-literal
+  // > Control Flow visit-logical
   @Override
   public Object visitLogicalExpr(Expr.Logical expr) {
     Object left = evaluate(expr.left);
@@ -285,8 +305,9 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   public Object visitSetExpr(Expr.Set expr) {
     Object object = evaluate(expr.object);
 
-    if (!(object instanceof LoxInstance)) {
-      throw new RuntimeError(expr.name, "Only instances have fields.");
+    if (!(object instanceof LoxInstance)) { // [order]
+      throw new RuntimeError(expr.name,
+          "Only instances have fields.");
     }
 
     Object value = evaluate(expr.value);
@@ -297,14 +318,17 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   @Override
   public Object visitSuperExpr(Expr.Super expr) {
     int distance = locals.get(expr);
-    LoxClass superclass = (LoxClass) environment.getAt(distance, "super");
+    LoxClass superclass = (LoxClass) environment.getAt(
+        distance, "super");
 
-    LoxInstance object = (LoxInstance) environment.getAt(distance - 1, "this");
+    LoxInstance object = (LoxInstance) environment.getAt(
+        distance - 1, "this");
 
     LoxFunction method = superclass.findMethod(expr.method.lexeme);
 
     if (method == null) {
-      throw new RuntimeError(expr.method, "Undefined property" + expr.method.lexeme + "!!");
+      throw new RuntimeError(expr.method,
+          "Undefined property '" + expr.method.lexeme + "'.");
     }
 
     return method.bind(object);
@@ -325,10 +349,10 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
       case MINUS:
         checkNumberOperand(expr.operator, right);
         return -(double) right;
-      default:
-        // unreachable
-        return null;
     }
+
+    // Unreachable.
+    return null;
   }
 
   @Override
@@ -351,10 +375,10 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     throw new RuntimeError(operator, "Operand must be a number.");
   }
 
-  private void checkNumberOperands(Token operator, Object left, Object right) {
+  private void checkNumberOperands(Token operator,
+      Object left, Object right) {
     if (left instanceof Double && right instanceof Double)
       return;
-
     throw new RuntimeError(operator, "Operands must be numbers.");
   }
 
@@ -363,7 +387,6 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
       return false;
     if (object instanceof Boolean)
       return (boolean) object;
-
     return true;
   }
 
@@ -387,6 +410,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
       }
       return text;
     }
+
     return object.toString();
   }
 }

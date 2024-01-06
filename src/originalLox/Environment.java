@@ -1,4 +1,5 @@
-package src.lox;
+//> Statements and State environment-class
+package com.craftinginterpreters.lox;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,7 +24,8 @@ class Environment {
     if (enclosing != null)
       return enclosing.get(name);
 
-    throw new RuntimeError(name, "Undefined variable '" + name.lexeme + "'!");
+    throw new RuntimeError(name,
+        "Undefined variable '" + name.lexeme + "'.");
   }
 
   void assign(Token name, Object value) {
@@ -37,7 +39,8 @@ class Environment {
       return;
     }
 
-    throw new RuntimeError(name, "Undefined variable '" + name.lexeme + "'.");
+    throw new RuntimeError(name,
+        "Undefined variable '" + name.lexeme + "'.");
   }
 
   void define(String name, Object value) {
@@ -47,7 +50,7 @@ class Environment {
   Environment ancestor(int distance) {
     Environment environment = this;
     for (int i = 0; i < distance; i++) {
-      environment = environment.enclosing;
+      environment = environment.enclosing; // [coupled]
     }
 
     return environment;
