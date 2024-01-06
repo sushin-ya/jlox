@@ -10,5 +10,5 @@ jane.name = "Jane";
 print jane;
 print jane.name;
 
-// var method = jane.sayName;
-// method();
+var method = jane.sayName;
+method();
