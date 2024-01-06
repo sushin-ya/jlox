@@ -1,0 +1,7 @@
+class DevonshireCream{
+  serverOn(){
+    return "Scones";
+  }
+}
+
+print DevonshireCream;
