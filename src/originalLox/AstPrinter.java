@@ -1,5 +1,5 @@
 //> Representing Code ast-printer
-package src.lox;
+package com.craftinginterpreters.lox;
 //> omit
 
 import java.util.List;
@@ -92,10 +92,10 @@ class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
   @Override
   public String visitIfStmt(Stmt.If stmt) {
     if (stmt.elseBranch == null) {
-      return parenthesize2("if", stmt.condition, stmt.theBranch);
+      return parenthesize2("if", stmt.condition, stmt.thenBranch);
     }
 
-    return parenthesize2("if-else", stmt.condition, stmt.theBranch,
+    return parenthesize2("if-else", stmt.condition, stmt.thenBranch,
         stmt.elseBranch);
   }
   // < Control Flow omit
