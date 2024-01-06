@@ -54,7 +54,8 @@ public class Lox {
     Parser parser = new Parser(tokens);
     List<Stmt> statements = parser.parse();
 
-    // FIXME: resolverもないし、最終系とかなり違う状態になってる、書き忘れ？
+    Resolver resolver = new Resolver(interpreter);
+    resolver.resolve(statements);
 
     if (hadError)
       return;
