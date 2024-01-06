@@ -1,0 +1,14 @@
+class Person {
+  sayName(){
+    print this.name;
+  }
+}
+
+var jane = Person();
+jane.name = "Jane";
+
+print jane;
+print jane.name;
+
+// var method = jane.sayName;
+// method();
